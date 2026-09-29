@@ -1,0 +1,23 @@
+{
+  "name": "webuntis-tomorrow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "timetable": "tsx timetable.ts",
+    "timetable:year": "tsx timetable.ts year",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@schnau/webuntis-api": "^0.2.6",
+    "effect": "4.0.0-rc.108"
+  },
+  "devDependencies": {
+    "dotenv": "^17.0.0",
+    "tsx": "^4.19.0",
+    "vitest": "^5.0.2"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
+}
