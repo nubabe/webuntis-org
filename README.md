@@ -49,15 +49,14 @@ Fetches from today through the end of the current school year and writes
 
 Everything in `data/` is local, personal state — none of it is tracked in
 git (it would otherwise leak your subjects, schedule, and any notes you
-add straight into the repo). Each config file has a checked-in `.example`
-template to copy and edit locally.
+add straight into the repo).
 
 | Path | What | Tracked? |
 |---|---|---|
-| `data/timetable.org` | generated output — open this in Emacs | no |
-| `data/rules.json` | automatic tag/filter rules | no — copy from `.example` |
-| `data/overrides.json` | captured manual edits (deletions/notes) | no — copy from `.example` |
-| `data/org-ids.json` | per-entry org-id registry | no — copy from `.example` |
+| `data/timetable.org` | generated output — open this in Emacs | no (regenerated) |
+| `data/rules.json` | automatic tag/filter rules, hand-edited | no — copy from `.example` |
+| `data/overrides.json` | captured manual edits, machine-managed | no (created on first run) |
+| `data/org-ids.json` | per-entry org-id registry, machine-managed | no (created on first run) |
 | `data/timetable-snapshot.json` | internal diff baseline | no (regenerated) |
 
 ## Running on a schedule
