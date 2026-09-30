@@ -11,8 +11,6 @@ export const addDays = (isoDate: string, days: number): string => {
   return toIsoDate(d);
 };
 
-export const tomorrowDate = (): string => addDays(toIsoDate(new Date()), 1);
-
 export const formatTime = (iso: string): string => {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;

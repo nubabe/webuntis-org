@@ -37,13 +37,6 @@ export const orgEntry = (item: TaggedLessonItem, orgIds: OrgIdRegistry): string 
   ].join("\n");
 };
 
-export const consoleLine = (item: LessonItem): string => {
-  const date = toIsoDate(new Date(item.start));
-  const time = `${formatTime(item.start)}-${formatTime(item.end)}`;
-  const notes = item.notes.length > 0 ? ` — ${item.notes.join(" ")}` : "";
-  return `  ${date} ${time}  ${item.subject}, ${item.room}, ${item.teachers.join(", ")}${notes}`;
-};
-
 /** Joins pre-rendered org entry blocks into full file content (empty string when there are none). */
 export const joinOrgBlocks = (blocks: ReadonlyArray<string>): string =>
   blocks.length === 0 ? "" : `${blocks.join("\n\n")}\n`;

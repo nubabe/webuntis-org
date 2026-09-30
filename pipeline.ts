@@ -5,7 +5,7 @@ import {
   type TimetableEntry,
   type TimetableResourceType,
 } from "@schnau/webuntis-api";
-import { chunkDateRange, tomorrowDate, toIsoDate, type DateChunk } from "./date";
+import { chunkDateRange, toIsoDate, type DateChunk } from "./date";
 import {
   extractInfo,
   mergeAdjacentExams,
@@ -22,13 +22,9 @@ export interface DateRange {
   readonly end: string;
 }
 
-export const resolveDateRange = (mode: "day" | "year") =>
+/** Resolves the current school year's date range, clamped to start no earlier than today. */
+export const resolveDateRange = () =>
   Effect.gen(function* () {
-    if (mode === "day") {
-      const date = tomorrowDate();
-      return { start: date, end: date };
-    }
-
     const schoolyears = yield* SchoolyearsClient;
     const list = yield* schoolyears.list;
     if (list.length === 0) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildOrgFileContent, consoleLine, joinOrgBlocks, orgEntry, orgTimestamp } from "./org-format";
+import { buildOrgFileContent, joinOrgBlocks, orgEntry, orgTimestamp } from "./org-format";
 import { entryKey } from "./org-key";
 import type { OrgIdRegistry } from "./org-id-registry";
 import type { TaggedLessonItem } from "./rules";
@@ -70,18 +70,6 @@ describe("orgEntry", () => {
 
   it("throws when no org-id is assigned for the entry's key", () => {
     expect(() => orgEntry(item(), {})).toThrow(/No org-id assigned/);
-  });
-});
-
-describe("consoleLine", () => {
-  it("formats a one-line summary with date, time, subject, room, teachers", () => {
-    expect(consoleLine(item())).toBe("  2026-03-02 08:00-08:50  Math, R101, Smith");
-  });
-
-  it("appends notes with an em-dash separator when present", () => {
-    expect(consoleLine(item({ notes: ["Note A", "Note B"] }))).toBe(
-      "  2026-03-02 08:00-08:50  Math, R101, Smith — Note A Note B",
-    );
   });
 });
 

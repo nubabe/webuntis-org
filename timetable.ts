@@ -10,7 +10,7 @@ import {
 } from "@schnau/webuntis-api";
 import type { ConfigurationError } from "@schnau/webuntis-api";
 import { buildLessonItems, loadEntries, partitionActive, resolveDateRange } from "./pipeline";
-import { consoleLine, joinOrgBlocks, orgEntry } from "./org-format";
+import { joinOrgBlocks, orgEntry } from "./org-format";
 import { entryKey } from "./org-key";
 import { pastEntriesText } from "./org-merge";
 import { generateOrgIds } from "./org-id-gen";
@@ -21,8 +21,6 @@ import { loadSnapshot, saveSnapshot } from "./snapshot";
 import { toIsoDate } from "./date";
 
 const ORG_FILE_PATH = "data/timetable.org";
-
-const mode: "day" | "year" = process.argv[2] === "year" ? "year" : "day";
 
 const run = Effect.gen(function* () {
   const previousOrgText = existsSync(ORG_FILE_PATH) ? readFileSync(ORG_FILE_PATH, "utf8") : null;
@@ -42,7 +40,7 @@ const run = Effect.gen(function* () {
   }
   const { type: resourceType, resource } = menu.myTimetable;
 
-  const range = yield* resolveDateRange(mode);
+  const range = yield* resolveDateRange();
   const { entries, chunkCount } = yield* loadEntries(timetable, resourceType, resource.id, range);
   const { active, cancelledCount } = partitionActive(entries);
   const { items: mergedItems, mergedCount } = buildLessonItems(active);
@@ -65,11 +63,6 @@ const run = Effect.gen(function* () {
   }
   if (manuallyDeletedCount > 0) {
     console.log(`Applied ${manuallyDeletedCount} manual deletion(s).`);
-  }
-  if (mode === "day") {
-    for (const item of items) {
-      console.log(consoleLine(item));
-    }
   }
 
   const { registry: orgIds, addedCount: newOrgIdCount } = ensureOrgIds(

@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "timetable": "tsx timetable.ts",
-    "timetable:year": "tsx timetable.ts year",
     "test": "vitest run"
   },
   "dependencies": {
