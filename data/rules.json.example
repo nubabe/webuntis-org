@@ -1,0 +1,7 @@
+{
+  "excludeSubjects": ["Study Hall"],
+  "subjectTags": [
+    { "match": "English", "tag": "english" },
+    { "match": "Mathematics", "tag": "math" }
+  ]
+}

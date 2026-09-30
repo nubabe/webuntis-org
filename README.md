@@ -13,7 +13,8 @@ on top of it.
 
 ```
 npm install
-cp .env.example .env   # fill in WEBUNTIS_SCHOOL_NAME / USERNAME / PASSWORD
+cp .env.example .env               # fill in WEBUNTIS_SCHOOL_NAME / USERNAME / PASSWORD
+cp data/rules.json.example data/rules.json   # edit to match your own subjects
 ```
 
 ## Usage
@@ -46,12 +47,17 @@ Fetches from today through the end of the current school year and writes
 
 ## Data layout
 
+Everything in `data/` is local, personal state — none of it is tracked in
+git (it would otherwise leak your subjects, schedule, and any notes you
+add straight into the repo). Each config file has a checked-in `.example`
+template to copy and edit locally.
+
 | Path | What | Tracked? |
 |---|---|---|
-| `data/timetable.org` | generated output — open this in Emacs | no (regenerated) |
-| `data/rules.json` | automatic tag/filter rules | yes |
-| `data/overrides.json` | captured manual edits (deletions/notes) | yes |
-| `data/org-ids.json` | per-entry org-id registry | yes |
+| `data/timetable.org` | generated output — open this in Emacs | no |
+| `data/rules.json` | automatic tag/filter rules | no — copy from `.example` |
+| `data/overrides.json` | captured manual edits (deletions/notes) | no — copy from `.example` |
+| `data/org-ids.json` | per-entry org-id registry | no — copy from `.example` |
 | `data/timetable-snapshot.json` | internal diff baseline | no (regenerated) |
 
 ## Running on a schedule
