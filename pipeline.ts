@@ -41,7 +41,10 @@ export const resolveDateRange = (mode: "day" | "year") =>
       list[list.length - 1];
 
     console.log(`Using school year "${current.name}": ${current.dateRange.start} – ${current.dateRange.end}`);
-    return { start: current.dateRange.start, end: current.dateRange.end };
+    // Only fetch from today onward — dates before today are never regenerated (see
+    // org-merge.ts's pastEntriesText), so there's nothing to gain from refetching them.
+    const start = current.dateRange.start > today ? current.dateRange.start : today;
+    return { start, end: current.dateRange.end };
   });
 
 const fetchChunk = (

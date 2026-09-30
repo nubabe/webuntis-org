@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildOrgFileContent, consoleLine, orgEntry, orgTimestamp } from "./org-format";
-import type { LessonItem } from "./webuntis-mapping";
+import { buildOrgFileContent, consoleLine, joinOrgBlocks, orgEntry, orgTimestamp } from "./org-format";
+import { entryKey } from "./org-key";
+import type { OrgIdRegistry } from "./org-id-registry";
+import type { TaggedLessonItem } from "./rules";
 
-const item = (overrides: Partial<LessonItem> = {}): LessonItem => ({
+const item = (overrides: Partial<TaggedLessonItem> = {}): TaggedLessonItem => ({
   keyword: "CLASS",
   start: "2026-03-02T08:00:00",
   end: "2026-03-02T08:50:00",
@@ -10,8 +12,13 @@ const item = (overrides: Partial<LessonItem> = {}): LessonItem => ({
   teachers: ["Smith"],
   room: "R101",
   notes: [],
+  tags: ["math"],
   ...overrides,
 });
+
+/** A registry assigning each item a predictable test id, keyed the same way the real registry is. */
+const idsFor = (...items: ReadonlyArray<TaggedLessonItem>): OrgIdRegistry =>
+  Object.fromEntries(items.map((it, i) => [entryKey(it), `test-id-${i}`]));
 
 describe("orgTimestamp", () => {
   it("formats an org-mode inactive-style timestamp with weekday and time range", () => {
@@ -21,13 +28,22 @@ describe("orgTimestamp", () => {
 });
 
 describe("orgEntry", () => {
-  it("renders keyword/subject, timestamp, room, teachers, and notes as org lines", () => {
-    const entry = orgEntry(
-      item({ keyword: "EXAM", subject: "Math", teachers: ["Smith", "Jones"], notes: ["Bring calculator"] }),
-    );
+  it("renders keyword/subject/tags, an ID + UNTIS_KEY property drawer, timestamp, room, teachers, and notes", () => {
+    const built = item({
+      keyword: "EXAM",
+      subject: "Math",
+      teachers: ["Smith", "Jones"],
+      notes: ["Bring calculator"],
+      tags: ["math"],
+    });
+    const entry = orgEntry(built, idsFor(built));
     expect(entry).toBe(
       [
-        "* EXAM Math",
+        "* EXAM Math :math:",
+        ":PROPERTIES:",
+        ":ID: test-id-0",
+        `:UNTIS_KEY: ${entryKey(built)}`,
+        ":END:",
         "<2026-03-02 Mon 08:00-08:50>",
         "R101",
         "Smith, Jones",
@@ -36,9 +52,24 @@ describe("orgEntry", () => {
     );
   });
 
+  it("renders multiple tags colon-joined", () => {
+    const built = item({ tags: ["math", "exam"] });
+    expect(orgEntry(built, idsFor(built))).toContain("* CLASS Math :math:exam:");
+  });
+
+  it("omits the tag suffix entirely when there are no tags", () => {
+    const built = item({ tags: [] });
+    expect(orgEntry(built, idsFor(built))).toContain("* CLASS Math\n");
+  });
+
   it("omits a notes line entirely when there are no notes", () => {
-    const entry = orgEntry(item({ notes: [] }));
+    const built = item({ notes: [] });
+    const entry = orgEntry(built, idsFor(built));
     expect(entry.endsWith("Smith")).toBe(true);
+  });
+
+  it("throws when no org-id is assigned for the entry's key", () => {
+    expect(() => orgEntry(item(), {})).toThrow(/No org-id assigned/);
   });
 });
 
@@ -54,14 +85,25 @@ describe("consoleLine", () => {
   });
 });
 
+describe("joinOrgBlocks", () => {
+  it("returns an empty string for no blocks", () => {
+    expect(joinOrgBlocks([])).toBe("");
+  });
+
+  it("joins blocks with a blank line and ends with a trailing newline", () => {
+    expect(joinOrgBlocks(["a", "b"])).toBe("a\n\nb\n");
+  });
+});
+
 describe("buildOrgFileContent", () => {
   it("returns an empty string for no items", () => {
-    expect(buildOrgFileContent([])).toBe("");
+    expect(buildOrgFileContent([], {})).toBe("");
   });
 
   it("joins entries with a blank line and ends with a trailing newline", () => {
     const a = item({ subject: "Math" });
     const b = item({ subject: "Physics", keyword: "EXAM" });
-    expect(buildOrgFileContent([a, b])).toBe(`${orgEntry(a)}\n\n${orgEntry(b)}\n`);
+    const ids = idsFor(a, b);
+    expect(buildOrgFileContent([a, b], ids)).toBe(`${orgEntry(a, ids)}\n\n${orgEntry(b, ids)}\n`);
   });
 });
