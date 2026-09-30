@@ -5,7 +5,7 @@ import type { OrgIdRegistry } from "./org-id-registry";
 import type { Snapshot } from "./overrides";
 import type { TaggedLessonItem } from "./rules";
 
-const SNAPSHOT_FILE_PATH = ".timetable-snapshot.json";
+const SNAPSHOT_FILE_PATH = "data/timetable-snapshot.json";
 
 export const loadSnapshot = (): Snapshot =>
   existsSync(SNAPSHOT_FILE_PATH) ? JSON.parse(readFileSync(SNAPSHOT_FILE_PATH, "utf8")) : {};

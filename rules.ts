@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import type { LessonItem } from "./webuntis-mapping";
 
-const RULES_FILE_PATH = "rules.json";
+const RULES_FILE_PATH = "data/rules.json";
 
 interface SubjectTagRule {
   readonly match: string;

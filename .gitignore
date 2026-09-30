@@ -1,4 +1,4 @@
 node_modules
 .env
-timetable.org
-.timetable-snapshot.json
+data/timetable.org
+data/timetable-snapshot.json

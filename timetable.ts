@@ -20,7 +20,7 @@ import { applyOverrides, captureManualEdits, loadOverrides, saveOverrides } from
 import { loadSnapshot, saveSnapshot } from "./snapshot";
 import { toIsoDate } from "./date";
 
-const ORG_FILE_PATH = "timetable.org";
+const ORG_FILE_PATH = "data/timetable.org";
 
 const mode: "day" | "year" = process.argv[2] === "year" ? "year" : "day";
 

@@ -3,7 +3,7 @@ import { parseOrgEntries } from "./org-parse";
 import type { TaggedLessonItem } from "./rules";
 import { entryKey } from "./org-key";
 
-const OVERRIDES_FILE_PATH = "overrides.json";
+const OVERRIDES_FILE_PATH = "data/overrides.json";
 
 export interface Override {
   readonly delete?: true;

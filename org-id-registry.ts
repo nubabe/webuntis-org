@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
-const REGISTRY_FILE_PATH = "org-ids.json";
+const REGISTRY_FILE_PATH = "data/org-ids.json";
 
 export interface OrgIdRegistry {
   readonly [key: string]: string;
