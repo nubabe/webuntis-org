@@ -44,7 +44,8 @@ describe("captureManualEdits", () => {
     const a = item({ subject: "Math" });
     const snapshot: Snapshot = { [entryKey(a)]: orgEntry(a, idsFor(a)) };
     const result = captureManualEdits("", snapshot, {});
-    expect(result[entryKey(a)]).toEqual({ delete: true });
+    expect(result.overrides[entryKey(a)]).toEqual({ delete: true });
+    expect(result.unrecognizedKeys).toEqual([]);
   });
 
   it("records extraNotes when a human appended a line after the generated entry", () => {
@@ -53,14 +54,27 @@ describe("captureManualEdits", () => {
     const snapshot: Snapshot = { [entryKey(a)]: baseline };
     const edited = `${baseline}\nDon't forget the textbook`;
     const result = captureManualEdits(edited, snapshot, {});
-    expect(result[entryKey(a)]).toEqual({ extraNotes: ["Don't forget the textbook"] });
+    expect(result.overrides[entryKey(a)]).toEqual({ extraNotes: ["Don't forget the textbook"] });
+    expect(result.unrecognizedKeys).toEqual([]);
+  });
+
+  it("flags an in-place edit to an existing line as unrecognized instead of silently dropping it", () => {
+    const a = item({ subject: "Math" });
+    const baseline = orgEntry(a, idsFor(a));
+    const edited = baseline.replace("R101", "R202");
+    const snapshot: Snapshot = { [entryKey(a)]: baseline };
+    const result = captureManualEdits(edited, snapshot, {});
+    expect(result.overrides).toEqual({});
+    expect(result.unrecognizedKeys).toEqual([entryKey(a)]);
   });
 
   it("does not change anything when the current text still matches the snapshot exactly", () => {
     const a = item({ subject: "Math" });
     const baseline = orgEntry(a, idsFor(a));
     const snapshot: Snapshot = { [entryKey(a)]: baseline };
-    expect(captureManualEdits(baseline, snapshot, {})).toEqual({});
+    const result = captureManualEdits(baseline, snapshot, {});
+    expect(result.overrides).toEqual({});
+    expect(result.unrecognizedKeys).toEqual([]);
   });
 
   it("leaves unrelated existing overrides untouched", () => {
@@ -69,11 +83,12 @@ describe("captureManualEdits", () => {
     const snapshot: Snapshot = { [entryKey(a)]: baseline };
     const existing: Overrides = { "some-other-key": { delete: true } };
     const result = captureManualEdits(baseline, snapshot, existing);
-    expect(result).toEqual(existing);
+    expect(result.overrides).toEqual(existing);
   });
 
   it("only diffs entries present in the snapshot, ignoring untracked content", () => {
     const result = captureManualEdits("* Unrelated heading\nsome text", {}, {});
-    expect(result).toEqual({});
+    expect(result.overrides).toEqual({});
+    expect(result.unrecognizedKeys).toEqual([]);
   });
 });

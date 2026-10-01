@@ -52,4 +52,9 @@ describe("chunkDateRange", () => {
       { start: "2026-01-11", end: "2026-01-20" },
     ]);
   });
+
+  it("throws instead of looping forever when size is not positive", () => {
+    expect(() => chunkDateRange("2026-01-01", "2026-01-05", 0)).toThrow(/positive/);
+    expect(() => chunkDateRange("2026-01-01", "2026-01-05", -1)).toThrow(/positive/);
+  });
 });

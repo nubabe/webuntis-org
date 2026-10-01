@@ -32,10 +32,14 @@ export const resolveDateRange = () =>
     }
 
     const today = toIsoDate(new Date());
-    const current =
-      list.find((sy) => sy.dateRange.start <= today && today <= sy.dateRange.end) ??
-      list[list.length - 1];
+    const matched = list.find((sy) => sy.dateRange.start <= today && today <= sy.dateRange.end);
+    const current = matched ?? list[list.length - 1];
 
+    if (matched === undefined) {
+      console.warn(
+        `No school year covers today (${today}); falling back to the most recent one: "${current.name}".`,
+      );
+    }
     console.log(`Using school year "${current.name}": ${current.dateRange.start} – ${current.dateRange.end}`);
     // Only fetch from today onward — dates before today are never regenerated (see
     // org-merge.ts's pastEntriesText), so there's nothing to gain from refetching them.
@@ -89,7 +93,7 @@ export interface PartitionedActive {
 
 /**
  * Separates active entries from cancelled ones. WebUntis signals cancellation two different
- * ways: either the teacher position is cleared (`extractInfo`'s `teacher` comes back null), or
+ * ways: either every teacher position is cleared (`extractInfo`'s `teachers` comes back empty), or
  * the entry itself is flagged `status === "CANCELLED"` while every position (including the
  * teacher) stays REGULAR — e.g. a lesson cancelled outright rather than left unstaffed.
  */
@@ -97,7 +101,7 @@ export const partitionActive = (entries: ReadonlyArray<TimetableEntry>): Partiti
   const withInfo = entries.map((entry) => [entry, extractInfo(entry)] as const);
   const active = withInfo.filter(
     (pair): pair is [TimetableEntry, ActiveEntryInfo] =>
-      pair[1].teacher !== null && pair[0].status !== "CANCELLED",
+      pair[1].teachers.length > 0 && pair[0].status !== "CANCELLED",
   );
   return { active, cancelledCount: entries.length - active.length };
 };

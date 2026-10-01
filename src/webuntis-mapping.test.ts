@@ -51,7 +51,7 @@ describe("extractInfo", () => {
     const info = extractInfo(baseEntry());
     expect(info).toEqual({
       subject: "Math",
-      teacher: "Smith",
+      teachers: ["Smith"],
       room: "R101",
       notes: [],
     });
@@ -61,7 +61,16 @@ describe("extractInfo", () => {
     const info = extractInfo(
       baseEntry({ position2: [position("TEACHER", null, { displayName: "Smith" })] }),
     );
-    expect(info.teacher).toBeNull();
+    expect(info.teachers).toEqual([]);
+  });
+
+  it("collects more than one concurrent teacher position (team teaching)", () => {
+    const info = extractInfo(
+      baseEntry({
+        position2: [position("TEACHER", { displayName: "Smith" }), position("TEACHER", { displayName: "Jones" })],
+      }),
+    );
+    expect(info.teachers).toEqual(["Smith", "Jones"]);
   });
 
   it("falls back to the removed room when current room is cleared (exam vacates room)", () => {
@@ -98,7 +107,7 @@ describe("extractInfo", () => {
 
 describe("toLessonItem", () => {
   it("maps an EXAM entry to keyword EXAM, others to CLASS", () => {
-    const info: ActiveEntryInfo = { subject: "Math", teacher: "Smith", room: "R101", notes: [] };
+    const info: ActiveEntryInfo = { subject: "Math", teachers: ["Smith"], room: "R101", notes: [] };
     expect(toLessonItem(baseEntry({ type: "EXAM" }), info).keyword).toBe("EXAM");
     expect(toLessonItem(baseEntry({ type: "NORMAL_TEACHING_PERIOD" }), info).keyword).toBe("CLASS");
   });

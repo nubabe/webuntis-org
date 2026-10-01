@@ -23,6 +23,10 @@ export interface DateChunk {
 
 /** Splits [start, end] (inclusive, YYYY-MM-DD) into non-overlapping chunks of at most `size` days. */
 export const chunkDateRange = (start: string, end: string, size: number): ReadonlyArray<DateChunk> => {
+  if (size <= 0) {
+    throw new Error(`chunkDateRange size must be positive, got ${size}.`);
+  }
+
   const chunks: DateChunk[] = [];
   let chunkStart = start;
   while (chunkStart <= end) {

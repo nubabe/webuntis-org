@@ -39,6 +39,13 @@ export const applyOverrides = (
         : item;
     });
 
+export interface CaptureManualEditsResult {
+  readonly overrides: Overrides;
+  /** Keys whose text changed from the baseline in a way that isn't a pure append (e.g. an
+   * in-place edit to an existing line) — not captured, since only appended lines are supported. */
+  readonly unrecognizedKeys: ReadonlyArray<string>;
+}
+
 /**
  * Diffs the current (possibly human-edited) org file against the snapshot of what was last
  * mechanically written, and folds any human deletions or appended note lines into `overrides`.
@@ -49,9 +56,10 @@ export const captureManualEdits = (
   currentOrgText: string,
   snapshot: Snapshot,
   overrides: Overrides,
-): Overrides => {
+): CaptureManualEditsResult => {
   const current = new Map(parseOrgEntries(currentOrgText).map((e) => [e.key, e.text]));
   const updates: Record<string, Override> = {};
+  const unrecognizedKeys: string[] = [];
 
   for (const [key, baselineText] of Object.entries(snapshot)) {
     const currentText = current.get(key);
@@ -61,17 +69,22 @@ export const captureManualEdits = (
       continue;
     }
 
-    if (currentText !== baselineText && currentText.startsWith(baselineText)) {
-      const extra = currentText
-        .slice(baselineText.length)
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
-      if (extra.length > 0) {
-        updates[key] = { extraNotes: extra };
-      }
+    if (currentText === baselineText) continue;
+
+    if (!currentText.startsWith(baselineText)) {
+      unrecognizedKeys.push(key);
+      continue;
+    }
+
+    const extra = currentText
+      .slice(baselineText.length)
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    if (extra.length > 0) {
+      updates[key] = { extraNotes: extra };
     }
   }
 
-  return { ...overrides, ...updates };
+  return { overrides: { ...overrides, ...updates }, unrecognizedKeys };
 };

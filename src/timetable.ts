@@ -26,8 +26,17 @@ const run = Effect.gen(function* () {
   const previousOrgText = existsSync(ORG_FILE_PATH) ? readFileSync(ORG_FILE_PATH, "utf8") : null;
 
   if (previousOrgText !== null) {
-    const updated = captureManualEdits(previousOrgText, loadSnapshot(), loadOverrides());
+    const { overrides: updated, unrecognizedKeys } = captureManualEdits(
+      previousOrgText,
+      loadSnapshot(),
+      loadOverrides(),
+    );
     saveOverrides(updated);
+    if (unrecognizedKeys.length > 0) {
+      console.warn(
+        `${unrecognizedKeys.length} manual edit(s) didn't match the expected append pattern and were not captured — they'll be overwritten on regeneration: ${unrecognizedKeys.join(", ")}`,
+      );
+    }
   }
 
   const timetable = yield* TimetableClient;

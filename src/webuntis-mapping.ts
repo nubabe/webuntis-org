@@ -12,15 +12,14 @@ export const UNKNOWN_ROOM = "(unknown room)";
 
 export interface EntryInfo {
   readonly subject: string;
-  /** null means no teacher is assigned — at this school that means the lesson is cancelled. */
-  readonly teacher: string | null;
+  /** Empty means no teacher is assigned — at this school that means the lesson is cancelled.
+   * Team-taught periods can have more than one concurrent TEACHER position. */
+  readonly teachers: ReadonlyArray<string>;
   readonly room: string;
   readonly notes: ReadonlyArray<string>;
 }
 
-export interface ActiveEntryInfo extends EntryInfo {
-  readonly teacher: string;
-}
+export interface ActiveEntryInfo extends EntryInfo {}
 
 export const extractInfo = (entry: TimetableEntry): EntryInfo => {
   const positions = [entry.position1, entry.position2, entry.position3, entry.position4].flatMap(
@@ -32,13 +31,19 @@ export const extractInfo = (entry: TimetableEntry): EntryInfo => {
   // where exam periods vacate the normal classroom without that meaning "no room".
   const byType = (type: string) =>
     positions.find((p) => p.current?.type.toUpperCase() === type)?.current;
+  const byTypeAll = (type: string) =>
+    positions.flatMap((p) => (p.current?.type.toUpperCase() === type ? [p.current] : []));
   const byTypeAllowRemoved = (type: string) =>
     byType(type) ?? positions.find((p) => p.removed?.type.toUpperCase() === type)?.removed;
   const label = (resource: { longName: string; displayName: string } | undefined) =>
     resource?.longName || resource?.displayName;
 
   const subject = label(byType(POSITION_TYPE.SUBJECT)) ?? UNKNOWN_SUBJECT;
-  const teacher = label(byType(POSITION_TYPE.TEACHER)) ?? null;
+  // Team-taught periods can have more than one concurrent TEACHER position; collect them all
+  // rather than just the first, so a second teacher isn't silently dropped.
+  const teachers = byTypeAll(POSITION_TYPE.TEACHER)
+    .map((r) => label(r))
+    .filter((t): t is string => Boolean(t));
   // Some schools repurpose a room's longName for other labeling, so stick to the room code.
   const room = byTypeAllowRemoved(POSITION_TYPE.ROOM)?.displayName ?? UNKNOWN_ROOM;
 
@@ -49,7 +54,7 @@ export const extractInfo = (entry: TimetableEntry): EntryInfo => {
     entry.substitutionText,
   ].filter((note): note is string => Boolean(note && note.trim().length > 0));
 
-  return { subject, teacher, room, notes: [...new Set(notes)] };
+  return { subject, teachers, room, notes: [...new Set(notes)] };
 };
 
 export interface LessonItem {
@@ -67,7 +72,7 @@ export const toLessonItem = (entry: TimetableEntry, info: ActiveEntryInfo): Less
   start: entry.duration.start,
   end: entry.duration.end,
   subject: info.subject,
-  teachers: [info.teacher],
+  teachers: info.teachers,
   room: info.room,
   notes: info.notes,
 });
