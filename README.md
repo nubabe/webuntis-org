@@ -59,7 +59,62 @@ add straight into the repo).
 | `data/org-ids.json` | per-entry org-id registry, machine-managed | no (created on first run) |
 | `data/timetable-snapshot.json` | internal diff baseline | no (regenerated) |
 
-## Running on a schedule
+## Nix
+
+A flake is included — `nix run` fetches once, `nix develop` gives a shell
+with Node and Emacs (no need for the npm/dotenv/rules.json setup above to
+run it that way, except you still need `.env` and `data/rules.json` in
+your working directory).
+
+```
+nix run .                 # from a directory containing your data/ setup
+nix develop                   # dev shell with node + emacs on PATH
+```
+
+The first `nix build` (or `nix run`) will fail with a hash mismatch —
+`npmDepsHash` in `package.nix` starts as a placeholder; paste in the hash
+the error reports and rebuild.
+
+### home-manager
+
+`homeManagerModules.default` wires up a systemd user service + timer for
+you — this is the declarative equivalent of the manual systemd setup
+below, and the recommended way to run this on NixOS/home-manager:
+
+```nix
+{
+  imports = [ inputs.webuntis-org.homeManagerModules.default ];
+  services.webuntis-org = {
+    enable = true;
+    # Outside the Nix store — agenix/sops-nix, or a plain chmod-600 file —
+    # defining WEBUNTIS_SCHOOL_NAME, WEBUNTIS_USERNAME, WEBUNTIS_PASSWORD.
+    environmentFile = "/run/secrets/webuntis-env";
+    # Optional: expose the generated org file at a conventional path
+    # (e.g. to add to org-agenda-files) while it's actually stored under
+    # stateDir below.
+    orgFileLink = "${config.home.homeDirectory}/org/school.org";
+  };
+}
+```
+
+Config (`rules.json` — the one file you hand-edit, copy from
+`data/rules.json.example`) and state (everything machine-managed:
+`timetable.org`, `overrides.json`, `org-ids.json`,
+`timetable-snapshot.json`) are kept apart, defaulting to
+`$XDG_CONFIG_HOME/webuntis-org` and `$XDG_STATE_HOME/webuntis-org`
+respectively — override via `configDir`/`stateDir` if you want them
+elsewhere.
+
+Add the flake as an input:
+
+```nix
+inputs.webuntis-org.url = "github:nubabe/webuntis-org";
+```
+
+`onCalendar` (default `[ "06:00" "10:00" "14:00" "18:00" ]`) controls how
+often it refetches. See `home-manager-module.nix` for all options.
+
+## Running on a schedule without Nix
 
 A systemd user timer works well — `Persistent=true` catches up a missed
 run after boot/wake, and `After=network-online.target` waits for
