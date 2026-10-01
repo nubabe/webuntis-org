@@ -1,4 +1,4 @@
-# webuntis-tomorrow
+# webuntis-org
 
 Fetches your WebUntis timetable and writes it to an Emacs org-mode file
 (`data/timetable.org`), with automatic subject tagging/filtering and a
@@ -63,8 +63,47 @@ add straight into the repo).
 
 A systemd user timer works well — `Persistent=true` catches up a missed
 run after boot/wake, and `After=network-online.target` waits for
-connectivity. See `~/.config/systemd/user/webuntis-timetable.{service,timer}`
-for a working example.
+connectivity. `npm run timetable` is safe to run on any schedule; it's
+the only entry point and never truncates what's already been fetched.
+
+`~/.config/systemd/user/webuntis-timetable.service`:
+
+```ini
+[Unit]
+Description=Fetch WebUntis timetable and update timetable.org
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/webuntis-org
+Environment=PATH=/usr/bin:/bin
+ExecStart=/usr/bin/npm run timetable
+```
+
+`~/.config/systemd/user/webuntis-timetable.timer`:
+
+```ini
+[Unit]
+Description=Run webuntis-timetable.service every few hours during the day
+
+[Timer]
+OnCalendar=*-*-* 06,10,14,18:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Enable with:
+
+```
+systemctl --user daemon-reload
+systemctl --user enable --now webuntis-timetable.timer
+```
+
+If you want it to run even before you log in (e.g. right after boot),
+also enable lingering: `loginctl enable-linger $USER`.
 
 ## Tests
 
