@@ -87,11 +87,17 @@ export interface PartitionedActive {
   readonly cancelledCount: number;
 }
 
-/** Separates entries with an assigned teacher (active) from cancelled ones (no teacher). */
+/**
+ * Separates active entries from cancelled ones. WebUntis signals cancellation two different
+ * ways: either the teacher position is cleared (`extractInfo`'s `teacher` comes back null), or
+ * the entry itself is flagged `status === "CANCELLED"` while every position (including the
+ * teacher) stays REGULAR — e.g. a lesson cancelled outright rather than left unstaffed.
+ */
 export const partitionActive = (entries: ReadonlyArray<TimetableEntry>): PartitionedActive => {
   const withInfo = entries.map((entry) => [entry, extractInfo(entry)] as const);
   const active = withInfo.filter(
-    (pair): pair is [TimetableEntry, ActiveEntryInfo] => pair[1].teacher !== null,
+    (pair): pair is [TimetableEntry, ActiveEntryInfo] =>
+      pair[1].teacher !== null && pair[0].status !== "CANCELLED",
   );
   return { active, cancelledCount: entries.length - active.length };
 };

@@ -53,7 +53,7 @@ const run = Effect.gen(function* () {
     `Timetable for ${resource.displayName} (${range.start} – ${range.end}): ${entries.length} lesson(s) across ${chunkCount} request(s).`,
   );
   if (cancelledCount > 0) {
-    console.log(`Skipped ${cancelledCount} cancelled lesson(s) (no teacher assigned).`);
+    console.log(`Skipped ${cancelledCount} cancelled lesson(s).`);
   }
   if (mergedCount > 0) {
     console.log(`Merged ${mergedCount} split exam period(s) into a single entry.`);
