@@ -4,7 +4,7 @@ Fetches your WebUntis timetable and writes it to an Emacs org-mode file
 (`data/timetable.org`), with automatic subject tagging/filtering and a
 reproducible layer for manual edits you make directly in the file.
 
-Built on [`@schnau/webuntis-api`](https://git.schnau.dev/schnau/webuntis-api) —
+Built on [`@schnau/webuntis-api`](https://github.com/HaukeSchnau/webuntis-api) —
 all the credit for talking to WebUntis (auth, the Effect-based client,
 the typed schemas) goes there. This repo is just the org-mode pipeline
 on top of it.
