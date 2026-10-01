@@ -10,7 +10,7 @@ import {
   extractInfo,
   mergeAdjacentExams,
   toLessonItem,
-  type ActiveEntryInfo,
+  type EntryInfo,
   type LessonItem,
 } from "./webuntis-mapping";
 
@@ -86,36 +86,44 @@ export const loadEntries = (
     return { entries, chunkCount: chunks.length };
   });
 
-export interface PartitionedActive {
-  readonly active: ReadonlyArray<readonly [TimetableEntry, ActiveEntryInfo]>;
-  readonly cancelledCount: number;
+export interface ClassifiedEntry {
+  readonly entry: TimetableEntry;
+  readonly info: EntryInfo;
+  readonly cancelled: boolean;
 }
 
 /**
- * Separates active entries from cancelled ones. WebUntis signals cancellation two different
- * ways: either every teacher position is cleared (`extractInfo`'s `teachers` comes back empty), or
- * the entry itself is flagged `status === "CANCELLED"` while every position (including the
- * teacher) stays REGULAR — e.g. a lesson cancelled outright rather than left unstaffed.
+ * Classifies every entry as active or cancelled, preserving fetch order. Cancelled entries are
+ * kept (not dropped) — `buildLessonItems` tags them with the CANCELED keyword instead, so they
+ * still show up in the org file and can still be excluded by a subject rule. WebUntis signals
+ * cancellation two different ways: either every teacher position is cleared (`info.teachers`
+ * comes back empty), or the entry itself is flagged `status === "CANCELLED"` while every
+ * position (including the teacher) stays REGULAR — e.g. a lesson cancelled outright rather than
+ * left unstaffed.
  */
-export const partitionActive = (entries: ReadonlyArray<TimetableEntry>): PartitionedActive => {
-  const withInfo = entries.map((entry) => [entry, extractInfo(entry)] as const);
-  const active = withInfo.filter(
-    (pair): pair is [TimetableEntry, ActiveEntryInfo] =>
-      pair[1].teachers.length > 0 && pair[0].status !== "CANCELLED",
-  );
-  return { active, cancelledCount: entries.length - active.length };
-};
+export const classifyEntries = (entries: ReadonlyArray<TimetableEntry>): ReadonlyArray<ClassifiedEntry> =>
+  entries.map((entry) => {
+    const info = extractInfo(entry);
+    return { entry, info, cancelled: info.teachers.length === 0 || entry.status === "CANCELLED" };
+  });
 
 export interface BuiltLessonItems {
   readonly items: ReadonlyArray<LessonItem>;
   readonly mergedCount: number;
+  readonly cancelledCount: number;
 }
 
-/** Maps active entries to lesson items and folds split exam periods into single entries. */
-export const buildLessonItems = (
-  active: ReadonlyArray<readonly [TimetableEntry, ActiveEntryInfo]>,
-): BuiltLessonItems => {
-  const mapped = active.map(([entry, info]) => toLessonItem(entry, info));
+/**
+ * Maps classified entries to lesson items — cancelled ones get the CANCELED keyword in place of
+ * CLASS/EXAM — and folds split exam periods into single entries. CANCELED items never merge
+ * with each other or with EXAM items; `mergeAdjacentExams` only merges matching EXAM keywords.
+ */
+export const buildLessonItems = (classified: ReadonlyArray<ClassifiedEntry>): BuiltLessonItems => {
+  const mapped = classified.map(({ entry, info, cancelled }) => {
+    const item = toLessonItem(entry, info);
+    return cancelled ? { ...item, keyword: "CANCELED" as const } : item;
+  });
   const items = mergeAdjacentExams(mapped);
-  return { items, mergedCount: mapped.length - items.length };
+  const cancelledCount = classified.filter((c) => c.cancelled).length;
+  return { items, mergedCount: mapped.length - items.length, cancelledCount };
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TimetableEntry, TimetableEntryPosition, TimetableEntryPositionResource } from "@schnau/webuntis-api";
-import { partitionActive } from "./pipeline";
+import { buildLessonItems, classifyEntries } from "./pipeline";
 
 const resource = (
   type: string,
@@ -46,33 +46,79 @@ const baseEntry = (overrides: Partial<TimetableEntry> = {}): TimetableEntry => (
   ...overrides,
 });
 
-describe("partitionActive", () => {
-  it("keeps a regular entry with a teacher assigned", () => {
-    const result = partitionActive([baseEntry()]);
-    expect(result.active).toHaveLength(1);
-    expect(result.cancelledCount).toBe(0);
+describe("classifyEntries", () => {
+  it("keeps a regular entry with a teacher assigned, marked not cancelled", () => {
+    const result = classifyEntries([baseEntry()]);
+    expect(result).toHaveLength(1);
+    expect(result[0].cancelled).toBe(false);
   });
 
-  it("drops an entry with no teacher assigned (position cleared)", () => {
+  it("marks an entry with no teacher assigned (position cleared) as cancelled", () => {
     const entry = baseEntry({ position2: [position("TEACHER", null)] });
-    const result = partitionActive([entry]);
-    expect(result.active).toHaveLength(0);
-    expect(result.cancelledCount).toBe(1);
+    const result = classifyEntries([entry]);
+    expect(result[0].cancelled).toBe(true);
   });
 
-  it("drops an entry flagged status CANCELLED even though the teacher position is still regular", () => {
+  it("marks an entry flagged status CANCELLED as cancelled even though the teacher position is still regular", () => {
     const entry = baseEntry({ status: "CANCELLED" });
-    const result = partitionActive([entry]);
-    expect(result.active).toHaveLength(0);
-    expect(result.cancelledCount).toBe(1);
+    const result = classifyEntries([entry]);
+    expect(result[0].cancelled).toBe(true);
+  });
+
+  it("preserves fetch order instead of splitting active from cancelled", () => {
+    const noTeacher = baseEntry({ position2: [position("TEACHER", null)] });
+    const regular = baseEntry();
+    const result = classifyEntries([noTeacher, regular]);
+    expect(result.map((c) => c.cancelled)).toEqual([true, false]);
+  });
+});
+
+describe("buildLessonItems", () => {
+  it("keeps a regular entry with its mapped keyword", () => {
+    const { items, cancelledCount } = buildLessonItems(classifyEntries([baseEntry()]));
+    expect(items).toHaveLength(1);
+    expect(items[0].keyword).toBe("CLASS");
+    expect(cancelledCount).toBe(0);
+  });
+
+  it("tags a cancelled entry (no teacher) with the CANCELED keyword instead of dropping it", () => {
+    const entry = baseEntry({ position2: [position("TEACHER", null)] });
+    const { items, cancelledCount } = buildLessonItems(classifyEntries([entry]));
+    expect(items).toHaveLength(1);
+    expect(items[0].keyword).toBe("CANCELED");
+    expect(cancelledCount).toBe(1);
+  });
+
+  it("tags an entry flagged status CANCELLED with the CANCELED keyword instead of dropping it", () => {
+    const entry = baseEntry({ status: "CANCELLED" });
+    const { items, cancelledCount } = buildLessonItems(classifyEntries([entry]));
+    expect(items).toHaveLength(1);
+    expect(items[0].keyword).toBe("CANCELED");
+    expect(cancelledCount).toBe(1);
   });
 
   it("counts both kinds of cancellation together", () => {
     const noTeacher = baseEntry({ position2: [position("TEACHER", null)] });
     const cancelled = baseEntry({ status: "CANCELLED" });
     const regular = baseEntry();
-    const result = partitionActive([noTeacher, cancelled, regular]);
-    expect(result.active).toHaveLength(1);
-    expect(result.cancelledCount).toBe(2);
+    const { items, cancelledCount } = buildLessonItems(classifyEntries([noTeacher, cancelled, regular]));
+    expect(items).toHaveLength(3);
+    expect(cancelledCount).toBe(2);
+  });
+
+  it("does not merge a cancelled exam with an adjacent active exam of the same subject", () => {
+    const cancelledExam = baseEntry({
+      type: "EXAM",
+      position2: [position("TEACHER", null)],
+      duration: { start: "2026-03-02T08:00:00", end: "2026-03-02T08:50:00" },
+    });
+    const activeExam = baseEntry({
+      type: "EXAM",
+      duration: { start: "2026-03-02T08:50:00", end: "2026-03-02T09:40:00" },
+    });
+    const { items } = buildLessonItems(classifyEntries([cancelledExam, activeExam]));
+    expect(items).toHaveLength(2);
+    expect(items[0].keyword).toBe("CANCELED");
+    expect(items[1].keyword).toBe("EXAM");
   });
 });

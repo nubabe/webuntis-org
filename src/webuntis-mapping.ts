@@ -19,8 +19,6 @@ export interface EntryInfo {
   readonly notes: ReadonlyArray<string>;
 }
 
-export interface ActiveEntryInfo extends EntryInfo {}
-
 export const extractInfo = (entry: TimetableEntry): EntryInfo => {
   const positions = [entry.position1, entry.position2, entry.position3, entry.position4].flatMap(
     (p) => p ?? [],
@@ -58,7 +56,7 @@ export const extractInfo = (entry: TimetableEntry): EntryInfo => {
 };
 
 export interface LessonItem {
-  readonly keyword: "CLASS" | "EXAM";
+  readonly keyword: "CLASS" | "EXAM" | "CANCELED";
   readonly start: string;
   readonly end: string;
   readonly subject: string;
@@ -67,7 +65,7 @@ export interface LessonItem {
   readonly notes: ReadonlyArray<string>;
 }
 
-export const toLessonItem = (entry: TimetableEntry, info: ActiveEntryInfo): LessonItem => ({
+export const toLessonItem = (entry: TimetableEntry, info: EntryInfo): LessonItem => ({
   keyword: entry.type === "EXAM" ? "EXAM" : "CLASS",
   start: entry.duration.start,
   end: entry.duration.end,

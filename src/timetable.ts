@@ -9,7 +9,7 @@ import {
   type WebUntisError,
 } from "@schnau/webuntis-api";
 import type { ConfigurationError } from "@schnau/webuntis-api";
-import { buildLessonItems, loadEntries, partitionActive, resolveDateRange } from "./pipeline";
+import { buildLessonItems, classifyEntries, loadEntries, resolveDateRange } from "./pipeline";
 import { joinOrgBlocks, orgEntry } from "./org-format";
 import { entryKey } from "./org-key";
 import { pastEntriesText } from "./org-merge";
@@ -51,8 +51,8 @@ const run = Effect.gen(function* () {
 
   const range = yield* resolveDateRange();
   const { entries, chunkCount } = yield* loadEntries(timetable, resourceType, resource.id, range);
-  const { active, cancelledCount } = partitionActive(entries);
-  const { items: mergedItems, mergedCount } = buildLessonItems(active);
+  const classified = classifyEntries(entries);
+  const { items: mergedItems, mergedCount, cancelledCount } = buildLessonItems(classified);
   const tagged = applyAutomaticRules(mergedItems, loadRules());
   const excludedCount = mergedItems.length - tagged.length;
   const items = applyOverrides(tagged, loadOverrides());
@@ -62,7 +62,7 @@ const run = Effect.gen(function* () {
     `Timetable for ${resource.displayName} (${range.start} – ${range.end}): ${entries.length} lesson(s) across ${chunkCount} request(s).`,
   );
   if (cancelledCount > 0) {
-    console.log(`Skipped ${cancelledCount} cancelled lesson(s).`);
+    console.log(`Marked ${cancelledCount} cancelled lesson(s) with the CANCELED keyword.`);
   }
   if (mergedCount > 0) {
     console.log(`Merged ${mergedCount} split exam period(s) into a single entry.`);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TimetableEntry, TimetableEntryPosition, TimetableEntryPositionResource } from "@schnau/webuntis-api";
-import { extractInfo, mergeAdjacentExams, toLessonItem, type ActiveEntryInfo, type LessonItem } from "./webuntis-mapping";
+import { extractInfo, mergeAdjacentExams, toLessonItem, type EntryInfo, type LessonItem } from "./webuntis-mapping";
 
 const resource = (
   type: string,
@@ -107,7 +107,7 @@ describe("extractInfo", () => {
 
 describe("toLessonItem", () => {
   it("maps an EXAM entry to keyword EXAM, others to CLASS", () => {
-    const info: ActiveEntryInfo = { subject: "Math", teachers: ["Smith"], room: "R101", notes: [] };
+    const info: EntryInfo = { subject: "Math", teachers: ["Smith"], room: "R101", notes: [] };
     expect(toLessonItem(baseEntry({ type: "EXAM" }), info).keyword).toBe("EXAM");
     expect(toLessonItem(baseEntry({ type: "NORMAL_TEACHING_PERIOD" }), info).keyword).toBe("CLASS");
   });
