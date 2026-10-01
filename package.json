@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "timetable": "tsx timetable.ts",
+    "timetable": "tsx src/timetable.ts",
     "test": "vitest run"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-# Builds `webuntis-org` as a wrapper around `tsx timetable.ts` — there's no compile step,
+# Builds `webuntis-org` as a wrapper around `tsx src/timetable.ts` — there's no compile step,
 # the script runs straight from TypeScript source, so we skip npm's build phase entirely
 # and just wrap the already-resolved `tsx` bin with its runtime deps (node, emacs) on PATH.
 {
@@ -28,7 +28,7 @@ buildNpmPackage {
 
     mkdir -p "$out/bin"
     makeWrapper "$out/lib/webuntis-org/node_modules/.bin/tsx" "$out/bin/webuntis-org" \
-      --add-flags "$out/lib/webuntis-org/timetable.ts" \
+      --add-flags "$out/lib/webuntis-org/src/timetable.ts" \
       --prefix PATH : ${lib.makeBinPath [ nodejs emacs ]}
 
     runHook postInstall
