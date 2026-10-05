@@ -8,7 +8,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@schnau/webuntis-api": "^0.2.6",
+    "@schnau/webuntis-api": "^0.3.0",
     "effect": "4.0.0-rc.108"
   },
   "devDependencies": {
