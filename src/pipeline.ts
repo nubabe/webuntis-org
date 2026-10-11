@@ -58,7 +58,7 @@ const fetchChunk = (
       start: chunk.start,
       end: chunk.end,
       resourceType,
-      resources: [resourceId],
+      resource: resourceId,
     })
     .pipe(Effect.map((result) => result.days.flatMap((day) => day.gridEntries)));
 
