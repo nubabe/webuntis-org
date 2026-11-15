@@ -14,7 +14,7 @@ buildNpmPackage {
 
   src = ./.;
 
-  npmDepsHash = "sha256-KYaCBECvVm7vw8bgYlHISaGtbYk/QRLqleYmXCoEtQA=";
+  npmDepsHash = "sha256-K/1Tc0Ibwydg9eb2ijZwIflC61HCu2ciRUJ6H1vBorw=";
 
   dontNpmBuild = true;
 
