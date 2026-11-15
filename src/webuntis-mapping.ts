@@ -33,7 +33,7 @@ export const extractInfo = (entry: TimetableEntry): EntryInfo => {
     positions.flatMap((p) => (p.current?.type.toUpperCase() === type ? [p.current] : []));
   const byTypeAllowRemoved = (type: string) =>
     byType(type) ?? positions.find((p) => p.removed?.type.toUpperCase() === type)?.removed;
-  const label = (resource: { longName: string; displayName: string } | undefined) =>
+  const label = (resource: { longName: string; displayName: string } | null | undefined) =>
     resource?.longName || resource?.displayName;
 
   const subject = label(byType(POSITION_TYPE.SUBJECT)) ?? UNKNOWN_SUBJECT;
