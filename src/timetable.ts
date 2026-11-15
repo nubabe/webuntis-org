@@ -1,14 +1,9 @@
 import "dotenv/config";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import { Effect } from "effect";
-import {
-  TimetableClient,
-  clientConfigFromEnv,
-  makeWebUntisLayer,
-  type WebUntisError,
-} from "@schnau/webuntis-api";
-import type { ConfigurationError } from "@schnau/webuntis-api";
+import { Effect, Layer } from "effect";
+import { FetchHttpClient } from "effect/http";
+import { TimetableClient, WebUntisConnection, webUntisLayer } from "@schnau/webuntis-api";
 import { buildLessonItems, classifyEntries, loadEntries, resolveDateRange } from "./pipeline";
 import { joinOrgBlocks, orgEntry } from "./org-format";
 import { entryKey } from "./org-key";
@@ -97,13 +92,12 @@ const run = Effect.gen(function* () {
   );
 });
 
-const program: Effect.Effect<void, ConfigurationError | WebUntisError | Error> = Effect.gen(
-  function* () {
-    const config = yield* clientConfigFromEnv();
-    const layer = makeWebUntisLayer(config);
-    yield* run.pipe(Effect.provide(layer));
-  },
+// Reads WEBUNTIS_* through the ambient ConfigProvider (process.env, populated by dotenv above).
+const WebUntis = Layer.unwrap(Effect.map(WebUntisConnection.fromEnv, webUntisLayer)).pipe(
+  Layer.provide(FetchHttpClient.layer),
 );
+
+const program = run.pipe(Effect.provide(WebUntis));
 
 // Guard so importing this module (e.g. from tests) doesn't trigger a live run.
 const isMain = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
