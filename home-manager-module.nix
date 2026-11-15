@@ -38,8 +38,10 @@ in
       default = "${config.xdg.configHome}/webuntis-org";
       description = ''
         Where `rules.json` lives — the one file you actually hand-edit.
-        Copy it from this repo's `data/rules.json.example` and adjust it
-        to your own subjects. Must be under your home directory.
+        Optional: the service runs without it (nothing excluded, fallback
+        tags only). To add rules, copy this repo's
+        `data/rules.json.example` there and adjust it to your own
+        subjects. Must be under your home directory.
       '';
     };
 

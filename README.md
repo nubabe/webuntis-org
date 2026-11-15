@@ -14,7 +14,7 @@ on top of it.
 ```
 npm install
 cp .env.example .env               # fill in WEBUNTIS_SCHOOL_NAME / USERNAME / PASSWORD
-cp data/rules.json.example data/rules.json   # edit to match your own subjects
+cp data/rules.json.example data/rules.json   # optional — edit to match your own subjects
 ```
 
 ## Usage
@@ -40,7 +40,8 @@ Fetches from today through the end of the current school year and writes
 - **Automatic tagging/filtering** is config, not code — see
   `data/rules.json`: `excludeSubjects` drops matching entries entirely,
   `subjectTags` maps a subject to an org tag (anything unmatched gets a
-  slugified fallback tag).
+  slugified fallback tag). Without a `rules.json` nothing is excluded and
+  every subject gets its fallback tag.
 - **Each entry gets a real org-id** (`data/org-ids.json`, generated via
   headless Emacs' `org-id-new`), stable across refetches — so it's a
   valid link target and compatible with tools like org-caldav.
@@ -54,7 +55,7 @@ add straight into the repo).
 | Path | What | Tracked? |
 |---|---|---|
 | `data/timetable.org` | generated output — open this in Emacs | no (regenerated) |
-| `data/rules.json` | automatic tag/filter rules, hand-edited | no — copy from `.example` |
+| `data/rules.json` | automatic tag/filter rules, hand-edited | no — optional, copy from `.example` |
 | `data/overrides.json` | captured manual edits, machine-managed | no (created on first run) |
 | `data/org-ids.json` | per-entry org-id registry, machine-managed | no (created on first run) |
 | `data/timetable-snapshot.json` | internal diff baseline | no (regenerated) |
@@ -63,8 +64,8 @@ add straight into the repo).
 
 A flake is included — `nix run` fetches once, `nix develop` gives a shell
 with Node and Emacs (no need for the npm/dotenv/rules.json setup above to
-run it that way, except you still need `.env` and `data/rules.json` in
-your working directory).
+run it that way, except you still need `.env` — and `data/rules.json`, if
+you want rules — in your working directory).
 
 ```
 nix run .                 # from a directory containing your data/ setup
@@ -97,8 +98,8 @@ below, and the recommended way to run this on NixOS/home-manager:
 }
 ```
 
-Config (`rules.json` — the one file you hand-edit, copy from
-`data/rules.json.example`) and state (everything machine-managed:
+Config (`rules.json` — the one file you hand-edit; optional, copy from
+`data/rules.json.example` once you want rules) and state (everything machine-managed:
 `timetable.org`, `overrides.json`, `org-ids.json`,
 `timetable-snapshot.json`) are kept apart, defaulting to
 `$XDG_CONFIG_HOME/webuntis-org` and `$XDG_STATE_HOME/webuntis-org`

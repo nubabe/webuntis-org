@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import type { LessonItem } from "./webuntis-mapping";
 
 const RULES_FILE_PATH = "data/rules.json";
@@ -13,7 +13,15 @@ export interface Rules {
   readonly subjectTags: ReadonlyArray<SubjectTagRule>;
 }
 
-export const loadRules = (): Rules => JSON.parse(readFileSync(RULES_FILE_PATH, "utf8"));
+const NO_RULES: Rules = { excludeSubjects: [], subjectTags: [] };
+
+/**
+ * rules.json is optional: without it nothing is excluded and every subject gets its slugified
+ * fallback tag. `existsSync` follows symlinks, so the home-manager module's link into a
+ * `configDir` that has no rules.json yet counts as missing too.
+ */
+export const loadRules = (): Rules =>
+  existsSync(RULES_FILE_PATH) ? JSON.parse(readFileSync(RULES_FILE_PATH, "utf8")) : NO_RULES;
 
 export interface TaggedLessonItem extends LessonItem {
   readonly tags: ReadonlyArray<string>;
