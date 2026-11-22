@@ -21,6 +21,24 @@ let
 
   # home.file keys are paths relative to $HOME; our options take absolute paths for clarity.
   homeRelative = path: lib.removePrefix "${config.home.homeDirectory}/" path;
+
+  jsonFormat = pkgs.formats.json { };
+
+  # How the `rules` option becomes the `data/rules.json` home.file source. Absolute path
+  # strings must be checked before JSON strings: both are strings, but JSON never starts
+  # with "/".
+  rulesSource =
+    let
+      r = cfg.rules;
+    in
+    if builtins.isPath r then
+      r
+    else if builtins.isString r && lib.hasPrefix "/" r then
+      config.lib.file.mkOutOfStoreSymlink r
+    else if builtins.isString r then
+      jsonFormat.generate "rules.json" (builtins.fromJSON r)
+    else
+      jsonFormat.generate "rules.json" r;
 in
 {
   options.services.webuntis-org = {
@@ -33,15 +51,28 @@ in
       description = "The webuntis-org package to run.";
     };
 
-    configDir = lib.mkOption {
-      type = lib.types.str;
-      default = "${config.xdg.configHome}/webuntis-org";
+    rules = lib.mkOption {
+      type = lib.types.nullOr (lib.types.oneOf [ lib.types.path jsonFormat.type ]);
+      default = null;
+      example = lib.literalExpression ''
+        {
+          excludeSubjects = [ "Religion" ];
+          subjectTags = [ { match = "Mathematics"; tag = "math"; } ];
+        }
+      '';
       description = ''
-        Where `rules.json` lives — the one file you actually hand-edit.
-        Optional: the service runs without it (nothing excluded, fallback
-        tags only). To add rules, copy this repo's
-        `data/rules.json.example` there and adjust it to your own
-        subjects. Must be under your home directory.
+        The `rules.json` config (schema: this repo's
+        `data/rules.json.example`). One of:
+
+        - a path to a JSON file: a Nix path literal (`./rules.json`) is
+          copied into the store; an absolute path string
+          (`"/home/me/rules.json"`) is symlinked out-of-store, so edits
+          apply on the next run without a rebuild;
+        - a Nix value (attrset), serialized to JSON;
+        - a JSON string (e.g. a multiline `'''...'''` literal), validated
+          at evaluation time.
+
+        `null` (default): no rules — nothing excluded, fallback tags only.
       '';
     };
 
@@ -102,14 +133,13 @@ in
     ];
 
     # The app always reads/writes fixed relative paths (data/rules.json, data/timetable.org,
-    # ...) under its working directory. rules.json is config, not state, so it's symlinked in
-    # from configDir; everything else genuinely is state and lives directly under stateDir —
-    # no symlink needed, the app writes there itself.
+    # ...) under its working directory. rules.json is config, not state, so it's linked in
+    # from the `rules` option; everything else genuinely is state and lives directly under
+    # stateDir — no symlink needed, the app writes there itself.
     home.file = lib.mkMerge [
-      {
-        "${homeRelative cfg.stateDir}/data/rules.json".source =
-          config.lib.file.mkOutOfStoreSymlink "${cfg.configDir}/rules.json";
-      }
+      (lib.mkIf (cfg.rules != null) {
+        "${homeRelative cfg.stateDir}/data/rules.json".source = rulesSource;
+      })
       (lib.mkIf (cfg.orgFileLink != null) {
         "${homeRelative cfg.orgFileLink}".source =
           config.lib.file.mkOutOfStoreSymlink "${cfg.stateDir}/data/timetable.org";

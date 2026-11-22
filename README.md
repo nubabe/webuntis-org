@@ -94,17 +94,23 @@ below, and the recommended way to run this on NixOS/home-manager:
     # (e.g. to add to org-agenda-files) while it's actually stored under
     # stateDir below.
     orgFileLink = "${config.home.homeDirectory}/org/school.org";
+    # Optional rules (schema: data/rules.json.example). Any of:
+    rules = {
+      excludeSubjects = [ "Religion" ];
+      subjectTags = [ { match = "Mathematics"; tag = "math"; } ];
+    };
+    # rules = ./rules.json;                                  # copied into the store
+    # rules = "${config.home.homeDirectory}/rules.json";     # live out-of-store symlink
+    # rules = ''{ "excludeSubjects": [], "subjectTags": [] }'';  # JSON string
   };
 }
 ```
 
-Config (`rules.json` — the one file you hand-edit; optional, copy from
-`data/rules.json.example` once you want rules) and state (everything machine-managed:
+`rules` (default `null`: nothing excluded, fallback tags only) is linked
+in as `data/rules.json`. State (everything machine-managed:
 `timetable.org`, `overrides.json`, `org-ids.json`,
-`timetable-snapshot.json`) are kept apart, defaulting to
-`$XDG_CONFIG_HOME/webuntis-org` and `$XDG_STATE_HOME/webuntis-org`
-respectively — override via `configDir`/`stateDir` if you want them
-elsewhere.
+`timetable-snapshot.json`) defaults to `$XDG_STATE_HOME/webuntis-org` —
+override via `stateDir`.
 
 Add the flake as an input:
 
