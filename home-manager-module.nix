@@ -24,17 +24,13 @@ let
 
   jsonFormat = pkgs.formats.json { };
 
-  # How the `rules` option becomes the `data/rules.json` home.file source. Absolute path
-  # strings must be checked before JSON strings: both are strings, but JSON never starts
-  # with "/".
+  # How the `rules` option becomes the `data/rules.json` home.file source.
   rulesSource =
     let
       r = cfg.rules;
     in
     if builtins.isPath r then
       r
-    else if builtins.isString r && lib.hasPrefix "/" r then
-      config.lib.file.mkOutOfStoreSymlink r
     else if builtins.isString r then
       jsonFormat.generate "rules.json" (builtins.fromJSON r)
     else
@@ -52,7 +48,7 @@ in
     };
 
     rules = lib.mkOption {
-      type = lib.types.nullOr (lib.types.oneOf [ lib.types.path jsonFormat.type ]);
+      type = lib.types.nullOr jsonFormat.type;
       default = null;
       example = lib.literalExpression ''
         {
@@ -64,10 +60,7 @@ in
         The `rules.json` config (schema: this repo's
         `data/rules.json.example`). One of:
 
-        - a path to a JSON file: a Nix path literal (`./rules.json`) is
-          copied into the store; an absolute path string
-          (`"/home/me/rules.json"`) is symlinked out-of-store, so edits
-          apply on the next run without a rebuild;
+        - a Nix path to a JSON file (`./rules.json`), copied into the store;
         - a Nix value (attrset), serialized to JSON;
         - a JSON string (e.g. a multiline `'''...'''` literal), validated
           at evaluation time.

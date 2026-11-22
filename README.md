@@ -99,8 +99,7 @@ below, and the recommended way to run this on NixOS/home-manager:
       excludeSubjects = [ "Religion" ];
       subjectTags = [ { match = "Mathematics"; tag = "math"; } ];
     };
-    # rules = ./rules.json;                                  # copied into the store
-    # rules = "${config.home.homeDirectory}/rules.json";     # live out-of-store symlink
+    # rules = ./rules.json;                                     # JSON file
     # rules = ''{ "excludeSubjects": [], "subjectTags": [] }'';  # JSON string
   };
 }

@@ -17,8 +17,7 @@ const NO_RULES: Rules = { excludeSubjects: [], subjectTags: [] };
 
 /**
  * rules.json is optional: without it nothing is excluded and every subject gets its slugified
- * fallback tag. `existsSync` follows symlinks, so a home-manager `rules` path pointing at a
- * file that doesn't exist yet counts as missing too.
+ * fallback tag.
  */
 export const loadRules = (): Rules =>
   existsSync(RULES_FILE_PATH) ? JSON.parse(readFileSync(RULES_FILE_PATH, "utf8")) : NO_RULES;
